@@ -3,7 +3,7 @@
 
 /* Scelte comuni: ogni regola usa var() per richiamarne il valore. */
 :root {
-  --colore-primario: #21c483;
+  --colore-primario: #428723;
   --colore-primario-scuro: #cd10a4;
   --colore-sfondo: #f5f2e9;
   --colore-testo: #202923;
