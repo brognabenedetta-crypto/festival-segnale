@@ -3,12 +3,12 @@
 
 /* Scelte comuni: ogni regola usa var() per richiamarne il valore. */
 :root {
-  --colore-primario: #428723;
-  --colore-primario-scuro: #cd10a4;
+  --colore-primario: #5a4cef;
+  --colore-primario-scuro: #ffb0ee;
   --colore-sfondo: #f5f2e9;
   --colore-testo: #202923;
-  --font-testo: Zain, Poppins, serif;
-  --font-titoli: Reddit sans, "Times New Roman", serif;
+  --font-testo: "DM Sans", sans-serif;
+  --font-titoli: "Soligant", "DM Sans", serif;
 }
 
 * {
@@ -44,8 +44,12 @@ a:focus-visible {
 }
 
 .site-header {
-  padding: 1.25rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 1rem 0;
   border-bottom: 4px solid var(--colore-primario);
+  background: var(--colore-sfondo);
 }
 
 .brand {
@@ -65,13 +69,24 @@ a:focus-visible {
 }
 
 nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
   margin-top: 1rem;
 }
 
 nav a {
-  display: inline-block;
-  margin-right: 1rem;
+  display: block;
   padding: 0.25rem 0;
+}
+
+@media (min-width: 600px) {
+  nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
 }
 
 nav a[aria-current="page"] {
