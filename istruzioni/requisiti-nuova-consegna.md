@@ -1,70 +1,105 @@
-# Segnale — Programma dai dati
+# Segnale — Dati da un foglio di calcolo
 
-Trasforma il Programma del tuo sito Segnale: le schede devono essere generate da due file JSON, con eventi e sedi collegati. In Info e luoghi aggiungi un piccolo riquadro **Meteo a Torino adesso**, con dati letti da un’API pubblica.
+Il Programma del tuo sito non legge più i JSON della repository, ma un **foglio di calcolo Google pubblicato sul web**: così un evento si può cambiare senza toccare il codice e senza commit. Facoltativo: nella Home puoi aggiungere un riquadro **Notizie da Torino** con i titoli di un feed RSS, letti attraverso lo stesso foglio (punto 4).
 
 ## Da dove partire
 
-**Se hai svolto la consegna precedente, continua dal tuo sito**, conservando le tue personalizzazioni, e copia da questo pacchetto la cartella `dati/`. Altrimenti usa il sito in questo ZIP come base di recupero: il PDF `progettazione/moodboard.pdf` è un esempio docente, non una moodboard tua.
+**Se hai svolto la consegna precedente, continua dal tuo sito**, conservando le tue personalizzazioni. Se non l’hai svolta, usa come base di recupero il sito dello ZIP: il Programma generato dai JSON e il meteo sono già fatti; il PDF `progettazione/moodboard.pdf` è un esempio docente, non una moodboard tua.
 
-**Correzione della richiesta precedente:** l’obbligo di cambiare la disposizione del menu fra telefono e desktop è stato tolto: era un errore, perché rendeva la visualizzazione peggiore.
+Per creare il foglio ti servono i dati in CSV: chiedi al chatbot di convertire `dati/eventi.json` e `dati/sedi.json` in due file `dati/eventi.csv` e `dati/sedi.csv`, con i nomi dei campi nella prima riga, e controlla che ci siano sei eventi e tre sedi.
 
-## 1. Completa i due JSON
+Ti serve un account Google, anche personale. Nel foglio metti solo dati che potrebbero stare su un cartellone: una volta pubblicato, chiunque abbia l’indirizzo può leggerlo.
 
-I file in `dati/` contengono **una sede e due eventi**. Completali con le altre due sedi e i quattro eventi, presi dal tuo Programma e da Info e luoghi, seguendo i record già presenti. Non è necessario che gli ID siano consecutivi, come mostrano gli eventi forniti con id 1 e 4. Nome e indirizzo della sede stanno solo in `sedi.json`: ogni evento li richiama con `sede_id`.
+## 1. Crea il foglio
 
-## 2. Descrivi i dati
+Crea un nuovo foglio Google, per esempio «Segnale — dati». Importa i due CSV con **File > Importa > Carica**, scegliendo **Inserisci nuovi fogli** e togliendo la spunta a **Converti testo in numeri, date e formule**. Otterrai due schede, `eventi` e `sedi`: la prima riga contiene i nomi dei campi, gli stessi dei JSON. Elimina la scheda vuota iniziale.
 
-Crea `dati/SCHEMA.md` con una breve scheda dati:
+Se nella consegna precedente hai cambiato eventi o sedi, correggi le righe nel foglio. Scrivi le date come `2026-06-12` e gli orari come `10:00`, come nei JSON.
 
-1. Entità: Evento e Sede.
-2. Campi di ciascuna entità, con tipo ed esempio: sono quelli dei due JSON che hai completato.
-3. Chiave primaria di ciascuna entità: `id` numerico, univoco nell’entità e stabile.
-4. Relazione: una sede può ospitare più eventi; ogni evento si svolge in una sede. `Evento.sede_id` fa riferimento a `Sede.id`.
-5. Quantità: sei eventi e tre sedi.
-6. Chi aggiorna i dati e come: modifica dei file nella repository e pubblicazione.
-7. Che cosa mostra la pagina.
+## 2. Pubblica il foglio
 
-Nello stesso file, sotto la scheda, aggiungi lo schema Evento–Sede in Mermaid oppure un disegno leggibile.
+Con **File > Condividi > Pubblica sul web** pubblica le schede `eventi` e `sedi`, una alla volta, nel formato **CSV**. Ottieni due indirizzi: aprili nel browser per vedere che cosa riceverà il sito. Pubblicare non è condividere: chiunque può leggere quei dati, ma solo tu puoi modificarli.
 
-## 3. Genera il Programma
+## 3. Il Programma legge il foglio
 
-Fai in modo che `programma.html` carichi i due JSON con `fetch` e costruisca le schede: nell’HTML non devono restare le sei schede scritte a mano. Le schede mostrano le stesse informazioni di prima, con il nome della sede preso da `sedi.json`, e conservano lo stile del tuo sito.
+Fai in modo che `programma.html` legga eventi e sedi dai due indirizzi CSV invece che dai JSON. Tutto il resto resta come prima: schede, stile, nome della sede, messaggi di caricamento, di nessun evento e d’errore, «Sede da definire». Per leggere il CSV puoi usare la libreria Papa Parse da CDN, citata nella lezione 7.
 
-La pagina deve anche mostrare un messaggio mentre carica, quando non ci sono eventi e quando un file non si legge. Un evento con un `sede_id` sbagliato compare comunque, con un testo come «Sede da definire».
+Attenzione: nel CSV ogni valore è testo, anche `id` e `sede_id`. I JSON possono restare in `dati/` come copia, ma la pagina non li legge più.
 
-## 4. Meteo a Torino adesso
+## 4. Facoltativo: Notizie da Torino
 
-Un’**API** è un indirizzo che risponde con dati in JSON: si legge con `fetch` come i tuoi file, ma i dati arrivano da un altro sito e cambiano nel tempo. Open-Meteo, citata nella lezione 7, non richiede account né chiave. Apri questo indirizzo nel browser per vedere la risposta:
+Questo punto è facoltativo: se lo salti, la consegna riguarda soltanto il Programma.
+
+### La scheda delle notizie
+
+Il browser non può leggere direttamente il feed RSS di un altro sito (CORS, lezione 7). Lo legge Google: aggiungi una scheda `notizie`, scrivi `titolo`, `link` e `data` nelle celle A1, B1 e C1, poi questa formula in A2. Prende le ultime cinque notizie del feed di ANSA Piemonte e ne tiene titolo, collegamento e data, che riempiono da sole le colonne A, B e C:
 
 ```text
-https://api.open-meteo.com/v1/forecast?latitude=45.0703&longitude=7.6869&current=temperature_2m,wind_speed_10m&timezone=Europe%2FRome
+=CHOOSECOLS(IMPORTFEED("https://www.ansa.it/piemonte/notizie/piemonte_rss.xml";"items";FALSO;5);1;2;3)
 ```
 
-In `info.html` aggiungi una sezione **Meteo a Torino adesso**, nello stile del tuo sito, che:
+Incolla la formula con **Ctrl+Maiusc+V** (**Cmd+Maiusc+V** su Mac): così non copi anche colori e caratteri dell’editor. Se compare `#REF!`, fai clic sulla cella e scegli **Consenti l’accesso**. Non scrivere nulla in B2 e C2: se una cella è occupata, la formula non può riempirla e mostra un errore. Se il tuo foglio è in inglese, separa con `,` invece di `;` e scrivi `FALSE` invece di `FALSO`.
 
-- mostri temperatura, vento e ora del dato;
-- citi la fonte con un collegamento, per esempio «Dati meteo: Open-Meteo, licenza CC BY 4.0»;
-- chiarisca che è il meteo di oggi, non la previsione per le date del festival;
+Poi pubblica anche la scheda `notizie` in formato CSV, come le altre due.
+
+### La sezione nella Home
+
+Nella Home aggiungi una sezione **Notizie da Torino**, nello stile del tuo sito, che legga l’indirizzo CSV della scheda `notizie` e:
+
+- mostri al massimo cinque notizie, ciascuna con la data in italiano e il titolo collegato all’articolo originale;
+- citi la fonte, per esempio «Notizie dal feed RSS di ANSA Piemonte. I contenuti appartengono ad ANSA»;
 - se la richiesta non riesce, mostri un messaggio senza bloccare il resto della pagina.
+
+La data serve anche a capire quanto è recente una notizia: il foglio aggiorna il feed a intervalli, non a ogni visita, e a volte tiene per giorni le stesse notizie. Se le tue notizie hanno qualche giorno, non hai sbagliato nulla: è la copia che Google conserva per quell’indirizzo.
+
+### Facoltativo: notizie aggiornate ogni ora
+
+Google conserva una copia del feed per ogni indirizzo. Questo script cambia ogni ora l’indirizzo nella formula che hai già scritto in A2, aggiungendo `?v=` e un numero, così il foglio rilegge il feed. Scrivi prima la formula della scheda `notizie` e controlla che funzioni. Il PDF `guida-script-notizie.pdf` mostra ogni passaggio con le schermate.
+
+1. Nel foglio apri **Estensioni > Apps Script**, cancella il codice presente e incolla questo:
+
+```js
+// Notizie aggiornate ogni ora nella scheda «notizie».
+// Google conserva una copia del feed per ogni indirizzo: cambiando il numero dopo ?v=
+// l'indirizzo è nuovo e IMPORTFEED rilegge il feed.
+// Lo script cambia soltanto l'indirizzo dentro la formula già scritta in A2,
+// così separatori e FALSO restano quelli del tuo foglio.
+
+function aggiornaNotizie() {
+  const cella = SpreadsheetApp.getActive().getSheetByName('notizie').getRange('A2');
+  const nuova = cella.getFormula().replace(/"(https:\/\/[^"?]+)(\?v=\d+)?"/, '"$1?v=' + Date.now() + '"');
+  cella.setFormula(nuova);
+}
+
+// Da eseguire una volta sola: crea l'attivatore che chiama aggiornaNotizie ogni ora.
+function attivaOgniOra() {
+  ScriptApp.newTrigger('aggiornaNotizie').timeBased().everyHours(1).create();
+  aggiornaNotizie();
+}
+```
+
+2. Salva, scegli la funzione `attivaOgniOra` nel menu in alto e fai clic su **Esegui**, una volta sola.
+3. Google chiede l’autorizzazione. Può chiederti di verificare l’account con il numero di telefono, poi avvisa che l’app non è verificata e consiglia di non dare l’accesso: l’app è il tuo script, nel tuo foglio, e nessun altro la usa. Scegli **Avanzate**, poi il collegamento in basso **Apri Progetto senza titolo (non sicura)**; nella pagina delle autorizzazioni spunta **Seleziona tutto** e fai clic su **Continua**.
+4. Torna al foglio: nella formula di A2 c’è `?v=` e le notizie sono di oggi. In Apps Script, alla voce **Attivatori**, c’è un attivatore orario.
 
 ## 5. Verifica
 
-Apri il sito con Live Preview, non con il doppio clic. Fai queste prove una alla volta, ripristinando ogni volta i file:
+Apri il sito con Live Preview. Fai queste prove una alla volta, ripristinando ogni volta foglio e file:
 
-- Cambia il nome di una sede in `sedi.json`: cambia nelle schede dei suoi eventi.
-- Metti `[]` in `eventi.json`: compare il messaggio di nessun evento.
-- Rinomina `sedi.json`: compare il messaggio d’errore.
-- Metti un `sede_id` inesistente: l’evento compare con «Sede da definire».
-- Nell’indirizzo del meteo scrivi `temperatura_2m` al posto di `temperature_2m`: compare il messaggio d’errore del meteo, mentre galleria e mappa funzionano.
+- Nel foglio cambia il nome di una sede: ricaricando il Programma, cambia nelle schede dei suoi eventi, senza commit. Possono servire alcuni minuti.
+- Nel foglio scrivi un `sede_id` inesistente: l’evento compare con «Sede da definire».
+- Nel foglio taglia le righe degli eventi, lasciando la riga dei nomi dei campi: compare il messaggio di nessun evento. Poi incollale di nuovo.
+- Nel codice cambia una lettera dell’indirizzo CSV degli eventi: compare il messaggio d’errore.
+- Se hai fatto le notizie: nel codice cambia una lettera dell’indirizzo delle notizie; compare il messaggio d’errore delle notizie, mentre il resto della Home funziona.
 
-Controlla anche, a larghezza di telefono e di computer, che il resto del sito funzioni come prima.
+Controlla anche, a larghezza di telefono e di computer, che il resto del sito funzioni come prima, meteo compreso.
 
-## 6. AI e pubblicazione
+## 6. Scheda dati, AI e pubblicazione
 
-Puoi usare un chatbot o lavorare sul codice. Fornisci schema e file aggiornati, chiedi una modifica alla volta e verifica il risultato. Non servono abbonamenti AI, Node.js, npm o un database.
+In `dati/SCHEMA.md` aggiorna la scheda: i dati ora stanno nel foglio pubblicato e chi li aggiorna lo fa dal foglio, senza commit.
 
-Tieni un resoconto del lavoro con l’AI in `progettazione/resoconto-ai.md`: alla fine di ogni sessione aggiungi una sezione `## Sessione N` con un riassunto in pochi punti di come hai usato l’AI: che cosa hai chiesto, che cosa hai usato, modificato o scartato, come hai verificato, quali problemi hai avuto e come li hai risolti. Puoi farlo scrivere allo stesso chatbot con cui hai lavorato, poi rileggilo e correggilo. Non servono le conversazioni complete.
+Puoi usare un chatbot o lavorare sul codice. Fornisci scheda dati, file e indirizzi CSV, chiedi una modifica alla volta e verifica il risultato. Non servono abbonamenti AI, Node.js, npm o un database. Aggiungi al resoconto `progettazione/resoconto-ai.md` una sezione `## Sessione N` per ogni sessione di lavoro, come nella consegna precedente.
 
-Aggiorna la stessa repository e le stesse GitHub Pages, con la moodboard e le pagine già realizzate. Prima di terminare controlla che i dati siano quelli corretti e verifica la versione pubblica.
+Aggiorna la stessa repository e le stesse GitHub Pages. Prima di terminare apri la versione pubblica: il Programma, e le notizie se le hai fatte, devono mostrare i dati del foglio anche lì.
 
 La scadenza e la modalità di raccolta saranno comunicate dal docente.
