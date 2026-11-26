@@ -48,8 +48,118 @@
       </ul>
       <p class="reading-text">Festival, sedi ed eventi sono inventati per questa esercitazione. Non rappresentano un evento reale.</p>
     </section>
+    <section class="content-section" aria-labelledby="titolo-notizie">
+  <h2 id="titolo-notizie">Notizie da Torino</h2>
+  <p id="stato-notizie" role="status" aria-live="polite">
+    Caricamento delle notizie…
+  </p>
+  <ul id="elenco-notizie"></ul>
+  <p class="reading-text">
+    Notizie dal feed RSS di ANSA Piemonte. I contenuti appartengono ad ANSA.
+  </p>
+</section>
+
   </main>
 
   <footer class="site-footer"><div class="container"><p>Segnale · Progetto didattico · Festival immaginario</p></div></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+  const urlNotizie =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSncCRuA8Gm4zuT8yXaeax-6AXuuRW_E3bwlANK9Sqr6C_e2pxYXX20v-JeaB9ZvYOOfZ-Qjx8IWbDE/pub?gid=114304592&single=true&output=csv";
+
+  const elencoNotizie = document.querySelector("#elenco-notizie");
+  const statoNotizie = document.querySelector("#stato-notizie");
+
+  function leggiCsv(url) {
+    return new Promise((resolve, reject) => {
+      Papa.parse(url, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: risultati => {
+          if (risultati.errors.length) {
+            reject(new Error("Errore durante la lettura del CSV."));
+          } else {
+            resolve(risultati.data);
+          }
+        },
+        error: reject
+      });
+    });
+  }
+
+  function trovaCampo(riga, nomiPossibili) {
+    const chiavi = Object.keys(riga);
+    const chiave = chiavi.find(nome =>
+      nomiPossibili.includes(nome.trim().toLowerCase())
+    );
+    return chiave ? riga[chiave].trim() : "";
+  }
+
+  function formattaDataNotizia(valore) {
+    // Gestisce date ISO, anche con orario, e date nel formato gg/mm/aaaa.
+    const dataItaliana = valore.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const data = dataItaliana
+      ? new Date(
+          Number(dataItaliana[3]),
+          Number(dataItaliana[2]) - 1,
+          Number(dataItaliana[1])
+        )
+      : new Date(valore);
+
+    if (Number.isNaN(data.getTime())) return valore;
+
+    return new Intl.DateTimeFormat("it-IT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }).format(data);
+  }
+
+  async function caricaNotizie() {
+    try {
+      const righe = await leggiCsv(urlNotizie);
+
+      const notizie = righe
+        .map(riga => ({
+          data: trovaCampo(riga, ["data", "date", "pubdate", "published"]),
+          titolo: trovaCampo(riga, ["titolo", "title"]),
+          link: trovaCampo(riga, ["link", "url", "guid"])
+        }))
+        .filter(notizia => notizia.titolo && notizia.link)
+        .slice(0, 5);
+
+      if (notizie.length === 0) {
+        throw new Error("Il CSV non contiene notizie utilizzabili.");
+      }
+
+      for (const notizia of notizie) {
+        const elemento = document.createElement("li");
+        const data = document.createElement("span");
+        const link = document.createElement("a");
+
+        data.textContent = notizia.data
+          ? `${formattaDataNotizia(notizia.data)} — `
+          : "";
+
+        link.href = notizia.link;
+        link.textContent = notizia.titolo;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        elemento.append(data, link);
+        elencoNotizie.append(elemento);
+      }
+
+      statoNotizie.hidden = true;
+    } catch (errore) {
+      console.error(errore);
+      statoNotizie.textContent =
+        "Le notizie non sono disponibili al momento.";
+    }
+  }
+
+  caricaNotizie();
+</script>
 </body>
 </html>
